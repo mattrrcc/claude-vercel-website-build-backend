@@ -1,0 +1,12 @@
+{
+  "name": "rebel-reaper-backend",
+  "version": "1.0.0",
+  "description": "Serverless backend for rebelreaper.com — proxies Square Catalog/Inventory for live product sync, and Square Payments for real checkout (card, Apple Pay, Afterpay).",
+  "private": true,
+  "dependencies": {
+    "square": "^39.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
