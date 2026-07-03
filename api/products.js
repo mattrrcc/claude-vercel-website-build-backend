@@ -6,14 +6,21 @@
 // want to reduce API calls under heavy traffic — see comment at bottom).
 
 const square = require('square');
-const SquareClient = square.SquareClient || (square.default && square.default.SquareClient);
 
-const client = new SquareClient({
-    token: process.env.SQUARE_ACCESS_TOKEN,
-    environment: process.env.SQUARE_ENV === 'production'
-          ? 'https://connect.squareup.com'
-          : 'https://connect.squareupsandbox.com',
-});
+function getClient() {
+      const SquareClientCtor = square.SquareClient || (square.default && square.default.SquareClient) || square.Client;
+      if (typeof SquareClientCtor !== 'function') {
+              const topKeys = Object.keys(square || {}).join(', ');
+              const defaultKeys = square && square.default ? Object.keys(square.default).join(', ') : 'none';
+              throw new Error('SquareClient constructor not found. top-level keys: [' + topKeys + '] default keys: [' + defaultKeys + ']');
+      }
+      return new SquareClientCtor({
+              token: process.env.SQUARE_ACCESS_TOKEN,
+              environment: process.env.SQUARE_ENV === 'production'
+                        ? 'https://connect.squareup.com'
+                        : 'https://connect.squareupsandbox.com',
+      });
+}
 
 const LOCATION_ID = process.env.SQUARE_LOCATION_ID;
 
@@ -42,6 +49,7 @@ function centsToDollars(m) {
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
   try {
+            const client = getClient();
     // 1. Pull categories so we can map IDs -> friendly names.
     const catResp = await client.catalog.list({ types: 'CATEGORY' });
     const categoryNameById = {};
