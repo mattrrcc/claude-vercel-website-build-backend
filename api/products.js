@@ -8,18 +8,31 @@
 const square = require('square');
 
 function getClient() {
-      const SquareClientCtor = square.SquareClient || (square.default && square.default.SquareClient) || square.Client;
-      if (typeof SquareClientCtor !== 'function') {
-              const topKeys = Object.keys(square || {}).join(', ');
-              const defaultKeys = square && square.default ? Object.keys(square.default).join(', ') : 'none';
-              throw new Error('SquareClient constructor not found. top-level keys: [' + topKeys + '] default keys: [' + defaultKeys + ']');
-      }
-      return new SquareClientCtor({
-              token: process.env.SQUARE_ACCESS_TOKEN,
-              environment: process.env.SQUARE_ENV === 'production'
-                        ? 'https://connect.squareup.com'
-                        : 'https://connect.squareupsandbox.com',
-      });
+        const candidates = [
+                  ['square.SquareClient', square.SquareClient],
+                  ['square.default.SquareClient', square.default && square.default.SquareClient],
+                ];
+        let ctor, usedLabel;
+        for (const [label, c] of candidates) {
+                  if (typeof c === 'function') { ctor = c; usedLabel = label; break; }
+        }
+        if (!ctor) {
+                  const topKeys = Object.keys(square || {}).join(', ');
+                  const defaultKeys = square && square.default ? Object.keys(square.default).join(', ') : 'none';
+                  throw new Error('SquareClient constructor not found. top-level keys: [' + topKeys + '] default keys: [' + defaultKeys + ']');
+        }
+        const instance = new ctor({
+                  token: process.env.SQUARE_ACCESS_TOKEN,
+                  environment: process.env.SQUARE_ENV === 'production'
+                              ? 'https://connect.squareup.com'
+                              : 'https://connect.squareupsandbox.com',
+        });
+        if (!instance.catalog) {
+                  const ownKeys = Object.keys(instance).join(', ');
+                  const protoKeys = Object.getOwnPropertyNames(Object.getPrototypeOf(instance)).join(', ');
+                  throw new Error('Client built via ' + usedLabel + ' but has no .catalog getter. own keys: [' + ownKeys + '] proto keys: [' + protoKeys + ']');
+        }
+        return instance;
 }
 
 const LOCATION_ID = process.env.SQUARE_LOCATION_ID;
