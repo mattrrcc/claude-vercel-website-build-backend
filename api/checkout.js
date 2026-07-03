@@ -5,14 +5,15 @@
 // all three). This is the ONLY place your Square access token is ever used for
 // money movement, and it never leaves the server.
 
-const { SquareClient, SquareEnvironment, SquareError } = require('square');
+const square = require('square');
+const SquareClient = square.SquareClient || (square.default && square.default.SquareClient);
 const { randomUUID } = require('crypto');
 
 const client = new SquareClient({
-  token: process.env.SQUARE_ACCESS_TOKEN,
-  environment: process.env.SQUARE_ENV === 'production'
-    ? SquareEnvironment.Production
-    : SquareEnvironment.Sandbox,
+    token: process.env.SQUARE_ACCESS_TOKEN,
+    environment: process.env.SQUARE_ENV === 'production'
+          ? 'https://connect.squareup.com'
+          : 'https://connect.squareupsandbox.com',
 });
 
 const LOCATION_ID = process.env.SQUARE_LOCATION_ID;
@@ -60,7 +61,7 @@ module.exports = async (req, res) => {
       totalCents,
     });
   } catch (err) {
-    if (err instanceof SquareError) {
+          if (err && (Array.isArray(err.errors) || err.statusCode)) {
       console.error('Square payment error', err.errors);
       return res.status(402).json({ error: 'Payment failed', detail: err.errors });
     }
