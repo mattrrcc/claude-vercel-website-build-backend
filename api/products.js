@@ -5,13 +5,14 @@
 // because this reads Square directly on every request (add a short cache if you
 // want to reduce API calls under heavy traffic — see comment at bottom).
 
-const { SquareClient, SquareEnvironment } = require('square');
+const square = require('square');
+const SquareClient = square.SquareClient || (square.default && square.default.SquareClient);
 
 const client = new SquareClient({
-  token: process.env.SQUARE_ACCESS_TOKEN,
-  environment: process.env.SQUARE_ENV === 'production'
-    ? SquareEnvironment.Production
-    : SquareEnvironment.Sandbox,
+    token: process.env.SQUARE_ACCESS_TOKEN,
+    environment: process.env.SQUARE_ENV === 'production'
+          ? 'https://connect.squareup.com'
+          : 'https://connect.squareupsandbox.com',
 });
 
 const LOCATION_ID = process.env.SQUARE_LOCATION_ID;
